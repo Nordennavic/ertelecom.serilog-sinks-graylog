@@ -44,9 +44,9 @@ jobs:
         run: dotnet build ./src --no-restore
 
       - name: Pack
-        run: dotnet pack ./src/Serilog.Sinks.Graylog/Serilog.Sinks.Graylog.csproj --include-symbols --include-source -o /app/build
+        run: dotnet pack ./src/Serilog.Sinks.Graylog/Serilog.Sinks.Graylog.csproj --include-symbols --include-source -o ./.build/ertelecom.Serilog.Sinks.Graylog
 
       - name: Push
         run: |
           cd /app/build
-          dotnet nuget push ertelecom.Serilog.Sinks.Graylog.*.nupkg -k ${secrets.NUGET_API_KEY} -s https://api.nuget.org/v3/index.json
+          dotnet nuget push .build/ertelecom.Serilog.Sinks.Graylog/*.nupkg -k ${secrets.NUGET_API_KEY} -s https://api.nuget.org/v3/index.json
