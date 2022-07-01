@@ -49,4 +49,4 @@ jobs:
       - name: Push
         run: |
           cd ./.build/ertelecom.Serilog.Sinks.Graylog/
-          dotnet nuget push *.nupkg --source ${{ secrets.NUGET_API }} --api-key ${{ secrets.NUGET_KEY }}
+          dotnet nuget push *.nupkg --skip-duplicate --source ${{ secrets.NUGET_API }} --api-key ${{ secrets.NUGET_KEY }}
