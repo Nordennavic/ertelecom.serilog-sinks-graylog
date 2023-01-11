@@ -35,7 +35,9 @@ namespace Serilog.Sinks.Graylog.Core.Transport.Tcp
 
         private async Task CheckSocketConnection()
         {
-            CloseClient();
+            if (_client != null)
+                CloseClient();
+
             _client = new TcpClient();
             await Connect().ConfigureAwait(false);
         }
