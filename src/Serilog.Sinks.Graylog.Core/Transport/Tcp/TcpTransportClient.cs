@@ -1,9 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Serilog.Sinks.Graylog.Core.Transport.Tcp
@@ -13,8 +16,8 @@ namespace Serilog.Sinks.Graylog.Core.Transport.Tcp
         private readonly IPAddress _address;
         private readonly int _port;
         private readonly string _sslHost;
-        private TcpClient _client;
-        private Stream _stream;
+        //private TcpClient _client;
+        //private Stream _stream;
 
         /// <inheritdoc />
         public TcpTransportClient(IPAddress address, int port, string sslHost)
@@ -27,29 +30,39 @@ namespace Serilog.Sinks.Graylog.Core.Transport.Tcp
         /// <inheritdoc />
         public async Task Send(byte[] payload)
         {
-            await CheckSocketConnection().ConfigureAwait(false);
-
-            await _stream.WriteAsync(payload, 0, payload.Length).ConfigureAwait(false);
-            await _stream.FlushAsync().ConfigureAwait(false);
+            using var client = new TcpClient();
+            {
+                using var stream = await Connect(client).ConfigureAwait(false);
+                {
+                    await stream.WriteAsync(payload, 0, payload.Length).ConfigureAwait(false);
+                    await stream.FlushAsync().ConfigureAwait(false);
+                }
+            }
+            client.Dispose();
         }
 
-        private async Task CheckSocketConnection()
-        {
-            if (_client != null)
-                CloseClient();
+        //private TcpClient CheckSocketConnection()
+        //{
+        //    if (_client != null)
+        //    {
+        //        if (_client.Connected)
+        //            return;
+        //        else
+        //            CloseClient();
+        //    }
 
-            _client = new TcpClient();
-            await Connect().ConfigureAwait(false);
-        }
+        //    _client = new TcpClient();
+        //    await Connect().ConfigureAwait(false);
+        //}
 
-        private async Task Connect()
+        private async Task<Stream> Connect(TcpClient client)
         {
-            await _client.ConnectAsync(_address, _port).ConfigureAwait(false);
-            _stream = _client.GetStream();
+            await client.ConnectAsync(_address, _port).ConfigureAwait(false);
+            Stream stream = client.GetStream();
 
             if (!string.IsNullOrWhiteSpace(_sslHost))
             {
-                var _sslStream = new SslStream(_stream, false);
+                var _sslStream = new SslStream(stream, false);
 
                 await _sslStream.AuthenticateAsClientAsync(_sslHost).ConfigureAwait(false);
 
@@ -61,29 +74,31 @@ namespace Serilog.Sinks.Graylog.Core.Transport.Tcp
                         remoteCertificate.GetEffectiveDateString(),
                         remoteCertificate.GetExpirationDateString());
 
-                    _stream = _sslStream;
+                    return _sslStream;
                 }
                 else
                 {
                     Debug.Fail("Remote certificate is null.");
                 }
             }
+
+            return stream;
         }
 
-        private void CloseClient()
+        private void CloseClient(TcpClient client, Stream stream)
         {
 #if NETFRAMEWORK
-            _client?.Close();
+            //_client?.Close();
 #else
-            _client?.Dispose();
+            client?.Dispose();
 #endif
-            _stream?.Dispose();
+            stream?.Dispose();
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            CloseClient();
+            //CloseClient(client,  stream);
         }
 
     }

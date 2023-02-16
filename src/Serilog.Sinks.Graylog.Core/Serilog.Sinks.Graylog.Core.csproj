@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net461;net46;</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
     <RestorePackages>true</RestorePackages>
     <DebugType>full</DebugType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
